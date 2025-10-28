@@ -1,0 +1,19 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Migros Alışveriş Asistanı",
+  "name_for_model": "migros_assistant",
+  "description_for_human": "Migros'tan ürün bul, sepete ekle, teslimat saati seç ve siparişi onayla.",
+  "description_for_model": "Türkçe konuşarak Migros market siparişini yönetirsin: createCart ile sepet aç, listProducts ile ürün bul, addCartItem ile sepete ekle, listAddresses ve listDeliverySlots ile teslimat planla, checkoutOrder ile siparişi tamamla, getOrderStatus ile siparişi takip et. Kredi kartı isteme, payment_token olarak her zaman 'tok_demo_123' gönder.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://your-render-url/migros-openapi.json",
+    "is_user_authenticated": false
+  },
+  "logo_url": "https://your-render-url/logo.png",
+  "contact_email": "support@primegateglobal.com",
+  "legal_info_url": "https://primegateglobal.com/privacy"
+}
+

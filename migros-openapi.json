@@ -1,0 +1,372 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Migros ChatGPT Commerce Mock API",
+    "version": "1.0.0",
+    "description": "Bu API, ChatGPT içinden Migros tarzı market siparişi deneyimini uçtan uca simüle eder: ürün keşfi, sepet, adres, teslimat saati seçimi, ödeme ve sipariş takibi."
+  },
+  "servers": [
+    {
+      "url": "https://wise-zebras-trade.loca.lt",
+      "description": "Local mock server via tunnel"
+    }
+  ],
+  "paths": {
+    "/products": {
+      "get": {
+        "operationId": "listProducts",
+        "summary": "Ürün ara / listele",
+        "description": "Katalogdan ürün döner. İstersen isimle filtreleyebilirsin.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Arama metni (örn: 'süt', 'domates')"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 20 },
+            "description": "Kaç ürün dönülsün"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ürün listesi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": { "type": "integer" },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "example": "P1000" },
+                          "category": { "type": "string", "example": "Meyve & Sebze" },
+                          "name": { "type": "string", "example": "Domates - Kg" },
+                          "description": { "type": "string", "example": "Taze salkım domates (Kg)" },
+                          "price": { "type": "number", "example": 32.9 },
+                          "currency": { "type": "string", "example": "TRY" },
+                          "stock": { "type": "integer", "example": 50 },
+                          "image": { "type": "string", "example": "https://placehold.co/300x200?text=Domates" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/cart": {
+      "post": {
+        "operationId": "createCart",
+        "summary": "Yeni sepet oluştur",
+        "description": "Kullanıcı için yeni bir alışveriş sepeti başlatır.",
+        "responses": {
+          "201": {
+            "description": "Sepet oluşturuldu",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Cart" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/cart/{cartId}": {
+      "get": {
+        "operationId": "getCart",
+        "summary": "Sepeti görüntüle",
+        "parameters": [
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sepetin anlık durumu",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Cart" }
+              }
+            }
+          },
+          "404": {
+            "description": "Sepet bulunamadı"
+          }
+        }
+      }
+    },
+
+    "/cart/{cartId}/items": {
+      "post": {
+        "operationId": "addCartItem",
+        "summary": "Sepete ürün ekle",
+        "description": "Belirtilen ürünü belirtilen adetle sepete ekler.",
+        "parameters": [
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["productId", "quantity"],
+                "properties": {
+                  "productId": { "type": "string", "example": "P1000" },
+                  "quantity": { "type": "integer", "example": 2 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sepetin güncel hali (ürün eklendikten sonra)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Cart" }
+              }
+            }
+          },
+          "404": {
+            "description": "Sepet veya ürün bulunamadı"
+          }
+        }
+      }
+    },
+
+    "/addresses": {
+      "get": {
+        "operationId": "listAddresses",
+        "summary": "Kayıtlı teslimat adreslerini getir",
+        "responses": {
+          "200": {
+            "description": "Adres listesi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Address" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/delivery_slots": {
+      "get": {
+        "operationId": "listDeliverySlots",
+        "summary": "Seçilen adrese uygun teslimat saatlerini getir",
+        "parameters": [
+          {
+            "name": "address_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "example": "addr_home" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Teslimat slotları",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["address_id", "slots"],
+                  "properties": {
+                    "address_id": { "type": "string", "example": "addr_home" },
+                    "slots": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/DeliverySlot" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "address_id eksik"
+          }
+        }
+      }
+    },
+
+    "/checkout": {
+      "post": {
+        "operationId": "checkoutOrder",
+        "summary": "Checkout: ödemeyi al, siparişi oluştur",
+        "description": "Sepeti siparişe çevirir. Başarılıysa sipariş numarası döner.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["cart_id", "address_id", "slot_id", "payment_token"],
+                "properties": {
+                  "cart_id": { "type": "string", "example": "C1761631966981" },
+                  "address_id": { "type": "string", "example": "addr_home" },
+                  "slot_id": { "type": "string", "example": "slot-20" },
+                  "payment_token": { "type": "string", "example": "tok_demo_123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sipariş oluşturuldu",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CheckoutResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Geçersiz sepet veya ödeme"
+          }
+        }
+      }
+    },
+
+    "/order/{orderId}": {
+      "get": {
+        "operationId": "getOrderStatus",
+        "summary": "Sipariş detayı / takibi",
+        "description": "Önceden oluşturulmuş siparişin durumunu döner.",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "ORD-1761632072361" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sipariş detayı",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OrderStatus" }
+              }
+            }
+          },
+          "404": {
+            "description": "Sipariş bulunamadı"
+          }
+        }
+      }
+    }
+  },
+
+  "components": {
+    "schemas": {
+      "Cart": {
+        "type": "object",
+        "required": ["id", "items", "total", "currency"],
+        "properties": {
+          "id": { "type": "string", "example": "C1761631966981" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CartItem" }
+          },
+          "total": { "type": "number", "example": 65.8 },
+          "currency": { "type": "string", "example": "TRY" }
+        }
+      },
+      "CartItem": {
+        "type": "object",
+        "required": ["productId", "name", "price", "qty", "lineTotal"],
+        "properties": {
+          "productId": { "type": "string", "example": "P1000" },
+          "name": { "type": "string", "example": "Domates - Kg" },
+          "price": { "type": "number", "example": 32.9 },
+          "qty": { "type": "integer", "example": 2 },
+          "lineTotal": { "type": "number", "example": 65.8 }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "required": ["id", "nickname", "line1", "city", "postcode"],
+        "properties": {
+          "id": { "type": "string", "example": "addr_home" },
+          "nickname": { "type": "string", "example": "Ev" },
+          "line1": { "type": "string", "example": "Çamlıca Mah. 42/5" },
+          "city": { "type": "string", "example": "İstanbul" },
+          "postcode": { "type": "string", "example": "34000" }
+        }
+      },
+      "DeliverySlot": {
+        "type": "object",
+        "required": ["id", "label", "fee"],
+        "properties": {
+          "id": { "type": "string", "example": "slot-20" },
+          "label": { "type": "string", "example": "20:00 - 21:00" },
+          "fee": { "type": "number", "example": 9.9 }
+        }
+      },
+      "CheckoutResponse": {
+        "type": "object",
+        "required": ["order_id", "status", "eta", "message"],
+        "properties": {
+          "order_id": { "type": "string", "example": "ORD-1761632072361" },
+          "status": { "type": "string", "example": "CONFIRMED" },
+          "eta": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-10-28T08:14:32.361Z"
+          },
+          "message": {
+            "type": "string",
+            "example": "Sipariş alındı. Tahmini teslimat: 28.10.2025 11:14:32"
+          }
+        }
+      },
+      "OrderStatus": {
+        "type": "object",
+        "required": ["id","cart","address_id","slot_id","status","created_at","eta"],
+        "properties": {
+          "id": { "type": "string", "example": "ORD-1761632072361" },
+          "cart": { "$ref": "#/components/schemas/Cart" },
+          "address_id": { "type": "string", "example": "addr_home" },
+          "slot_id": { "type": "string", "example": "slot-20" },
+          "status": { "type": "string", "example": "CONFIRMED" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-10-28T08:14:32.361Z"
+          },
+          "eta": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-10-28T11:14:32.361Z"
+          }
+        }
+      }
+    }
+  }
+}
