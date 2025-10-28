@@ -5,12 +5,12 @@
     "version": "1.0.0",
     "description": "Bu API, ChatGPT içinden Migros tarzı market siparişi deneyimini uçtan uca simüle eder: ürün keşfi, sepet, adres, teslimat saati seçimi, ödeme ve sipariş takibi."
   },
-  "servers": [
-    {
-      "url": "https://wise-zebras-trade.loca.lt",
-      "description": "Local mock server via tunnel"
-    }
-  ],
+"servers": [
+  {
+    "url": "https://migros-demo.onrender.com",
+    "description": "Public Render server"
+  }
+],
   "paths": {
     "/products": {
       "get": {
