@@ -7,7 +7,8 @@
 // - Checkout (sipariş oluşturma + order_id)
 // - Sipariş durumu
 // - OpenAPI şemasını statik olarak sunma (migros-openapi.json)
-// - Localhost'u external dünyaya açabilmen için localtunnel uyumlu
+// - .well-known/ai-plugin.json manifest'ini dışarı açma
+// - Render (public) veya local ortamda çalışır
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -179,10 +180,16 @@ const PRODUCTS = buildProductCatalog(1000);
 // ------------------------------------------------------
 
 const app = express();
+
+// body parser
+app.use(express.json());
 app.use(bodyParser.json());
 
-// Statik servis: aynı klasördeki dosyaları direkt yayınla.
-// Bu sayede migros-openapi.json dosyasına dışarıdan GET atılabilecek.
+// manifest ve diğer statik dosyalar
+// 1) .well-known/ai-plugin.json
+app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
+
+// 2) proje kökünden statik servis (migros-openapi.json, logo.png vb.)
 app.use(express.static(path.join(__dirname)));
 
 const PORT = process.env.PORT || 4000;
@@ -343,7 +350,7 @@ app.post('/checkout', (req, res) => {
 
   // Siparişi oluştur
   const orderId = 'ORD-' + Date.now();
-  const eta = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 saat sonrası tahmini teslim
+  const eta = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 saat sonrası
 
   ORDERS[orderId] = {
     id: orderId,
@@ -385,5 +392,6 @@ app.get('/order/:orderId', (req, res) => {
 app.listen(PORT, HOST, () => {
   console.log(`Mock Migros API http://${HOST}:${PORT} adresinde çalışıyor`);
   console.log(`OpenAPI şeman: http://localhost:${PORT}/migros-openapi.json`);
-  console.log(`(localtunnel ile yayına açıp bu URL'yi ChatGPT Actions'a verebilirsin)`);
+  console.log(`Manifest:      http://localhost:${PORT}/.well-known/ai-plugin.json`);
+  console.log(`(Render prod URL'in: https://migros-demo.onrender.com )`);
 });
